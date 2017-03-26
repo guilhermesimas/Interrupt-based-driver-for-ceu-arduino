@@ -1,0 +1,74 @@
+#include "arduino/arduino.ceu"
+
+// RED / BLUE / GREEN Buttons
+input int PIN_08;
+// input int PIN_09;
+// input int PIN_10;
+
+// RED / BLUE / GREEN Terminals of RGB LED
+output int PIN_05;
+output int PIN_06;
+output int PIN_07;
+
+
+// Event marking a color change
+event void change_color;
+
+
+// Startup routine to check the LEDs
+emit PIN_05( HIGH );
+await 500ms;
+emit PIN_05( LOW );
+await 500ms;
+emit PIN_06( HIGH );
+await 500ms;
+emit PIN_06( LOW );
+await 500ms;
+emit PIN_07( HIGH );
+await 500ms;
+emit PIN_07( LOW );
+await 500ms;
+
+var int pin = 5;
+
+par do
+	loop do
+		_digitalWrite(pin,HIGH);
+		await 500ms;
+		_digitalWrite(pin,LOW);
+		await 500ms;
+	end
+	// Reading the button and emitting the event of every press
+with
+	loop do
+		await PIN_08 ;
+		emit change_color;
+		await PIN_08 ;
+	end
+with
+// Changing back to color every 3 presses. This is made possible
+// by Ceu synchronization and predictability
+	loop do
+		// RED
+		pin = 5;
+		await change_color ;
+		await change_color ;
+		await change_color ;
+	end
+with
+	loop do
+		// GREEN
+		await change_color ;
+		pin = 6;
+		await change_color ;
+		await change_color ;
+	end
+with
+	loop do
+		// BLUE
+		await change_color ;
+		await change_color ;
+		pin = 7;
+		await change_color ;
+	end
+end

@@ -35,7 +35,9 @@ par do
 	loop do
 		_digitalWrite(pin,HIGH);
 		await 500ms;
-		_digitalWrite(pin,LOW);
+		_digitalWrite(5,LOW);
+		_digitalWrite(6,LOW);
+		_digitalWrite(7,LOW);
 		await 500ms;
 	end
 	// Reading the button and emitting the event of every press
@@ -49,26 +51,28 @@ with
 // Changing back to color every 3 presses. This is made possible
 // by Ceu synchronization and predictability
 	loop do
-		// RED
+		// RED    
 		pin = 5;
 		await change_color ;
-		await change_color ;
-		await change_color ;
-	end
-with
-	loop do
 		// GREEN
-		await change_color ;
 		pin = 6;
 		await change_color ;
+		// BLUE
+		pin = 7;
 		await change_color ;
 	end
 with
 	loop do
-		// BLUE
-		await change_color ;
-		await change_color ;
-		pin = 7;
-		await change_color ;
+		await change_color;
+		if _digitalRead(5)==HIGH then
+			_digitalWrite(5,LOW);
+		else/if _digitalRead(6)==HIGH then
+			_digitalWrite(6,LOW);
+		else/if _digitalRead(7)==HIGH then
+			_digitalWrite(7,LOW);
+		else
+			break;
+		end
+		_digitalWrite(pin,HIGH);
 	end
 end

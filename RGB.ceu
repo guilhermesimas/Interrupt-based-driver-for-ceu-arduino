@@ -1,3 +1,15 @@
+/**
+ * RGB LED Blink with color changer
+ *
+ * This application involves a blinking RGB LED which changes
+ * color from red to green to blue back to red on each button
+ * press
+ *
+ * Author: Guilherme Simas (guilherme_abinader@hotmail.com)
+ *
+ * Date: 26.mar.2017
+ */
+
 #include "arduino/arduino.ceu"
 
 // Change color button
@@ -12,7 +24,10 @@ output int PIN_07;
 // Event marking a color change
 event void change_color;
 
+// Event marking a led turning on
 event void turn_led_on;
+
+// Event marking turning leds off
 event void turn_led_off;
 
 
@@ -30,9 +45,12 @@ await 500ms;
 emit PIN_07( LOW );
 await 500ms;
 
+// Variable that wil control which pin should be on
 var int pin = 5;
 
 par do
+	// Emits events corresponding to turning led on / off
+	// every half second
 	loop do
 		await 500ms;
 		emit turn_led_on;
@@ -40,11 +58,15 @@ par do
 		emit turn_led_off;
 	end
 with
+	// Event that turns the current color LED on
 	loop do
 		await turn_led_on;
 		_digitalWrite(pin,HIGH);
 	end
 with
+	// Event that turns all LED off (in order to avoid)
+	// leaving a color on when changing. Can probably be
+	// improved.
 	loop do
 		await turn_led_off;
 		_digitalWrite(5,LOW);
@@ -52,6 +74,8 @@ with
 		_digitalWrite(7,LOW);
 	end
 with
+	// Responsible for emitting a button press event and
+	// debouncing the button
 	loop do
 		await PIN_08 ;
 		emit change_color;
@@ -60,6 +84,8 @@ with
 		await 50us;
 	end
 with
+	// Wait for the button press event to change the
+	// variable that corresponds to the RGB color
 	loop do
 		pin = 5;
 		await change_color ;
@@ -69,6 +95,8 @@ with
 		await change_color ;
 	end
 with
+	// Responsible for treating the case where the button
+	// is pressed while the LED is HIGH
 	loop do
 		await change_color;
 		if _digitalRead(5)==HIGH or _digitalRead(6)==HIGH or _digitalRead(7)==HIGH then

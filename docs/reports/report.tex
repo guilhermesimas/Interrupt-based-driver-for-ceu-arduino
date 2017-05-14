@@ -1,0 +1,130 @@
+\documentclass{article}
+%\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{amsfonts}
+\usepackage{latexsym}
+\usepackage{fullpage}
+\usepackage{graphicx}
+%\usepackage{paralist}
+\usepackage{tikz-timing}
+\usepackage{tabto}
+
+\lstset{language=C}
+
+
+% Default margins are too wide all the way around. I reset them here
+\setlength{\topmargin}{-.5in}
+\setlength{\textheight}{9in}
+\setlength{\oddsidemargin}{.125in}
+\setlength{\textwidth}{6.25in}
+
+\begin{document}
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%----------------------------------------------------------------------------------------
+%	HEADING SECTIONS
+%----------------------------------------------------------------------------------------
+
+\textsc{\LARGE Google Summer Of Code}\\[1.5cm] % Name of your university/college
+\textsc{\Large LabLua}\\[0.5cm] % Major heading such as course name
+\textsc{\large Interrupt-based drivers and libraries for Ceu-Arduino}\\[0.5cm] % Minor heading such as course title
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Milestone Report 1}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%----------------------------------------------------------------------------------------
+%	AUTHOR SECTION
+%----------------------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+\begin{flushleft} \large
+\emph{Student:}\\
+Guilherme \textsc{Simas} % Your name
+\end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+\begin{flushright} \large
+\emph{Mentor:} \\
+Francisco \textsc{Santanna} % Supervisor's Name
+\end{flushright}
+\end{minipage}\\[4cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%----------------------------------------------------------------------------------------
+%	DATE SECTION
+%----------------------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%----------------------------------------------------------------------------------------
+%	LOGO SECTION
+%----------------------------------------------------------------------------------------
+
+%\includegraphics{Logo}\\[1cm] % Include a department/university logo - this will require the graphicx package
+ 
+%----------------------------------------------------------------------------------------
+
+\vfill % Fill the rest of the page with whitespace
+
+\end{titlepage}
+
+\tableofcontents{}
+
+\newpage
+
+\section{Introduction}	
+
+
+\tab The goal of this report is to show the progress on the project from the past two weeks, comparing it with the proposal in order to avaliate it. In the first section the expectations for the proposed deadline (May 12th) will be listed, followed by what was achieved.
+\par This document concludes by discussing the next steps forward and proposing alterations to the current scheduling and planning, if needed.
+
+\section{Milestone Objective}
+
+\tab The goal for this milestone, as described in the current schedule, is:
+\begin{enumerate}
+	\item Study current implementation of modules in Arduino which freeze the application.
+	\item Deepen into Ceu's current implementation of drivers and libraries.
+	\item Deliver a document with proposed modules for which to develop interrupt-based drivers and libraries.
+\end{enumerate}
+
+
+\section{Results}
+\tab Progress on each item in the previous section's list will now be presented below.
+\subsection{Study current implementation of modules in Arduino which freeze the application}
+\tab The Arduino programming model us structured, serial code. Fuctionalities are associated to function calls, and it is expected that after the code is past that line of code, that functionality has completed what is expected of it. For that reason, all functionalities that envolve hardware support freeze while waiting for the hardware to complete its work.
+\par Having said that, that are functionalities and modules which make use of interrupts, for example Serial communication interfaces. The modules usually have a sort of \textbf{begin()} call, which initializes the routines. Calls to \textbf{read()} and \textbf{write()} functions still freeze the application though, as they must still wait for the hardware.
+\par Since all modules freeze and can be improved upon, a selection will be made based on which modules are most relevant for general applications.
+\subsection{Deepen into Ceu's current implementation of drivers and libraries}
+\tab Drivers and libraries in Ceu-Arduino are implemented using a combination of functions developed in C which are wrapped in Ceu, due to its simple C integration, and ones fully developed in Ceu. The module \textbf{timer.ceu} for example, contains more C implementation than Ceu. On the other hand the module \textbf{usart.ceu} presents more Ceu code.
+\subsection{Deliver a document with proposed modules for which to develop interrupt-based drivers and libraries.}
+\tab These are the chosen modules for reimplementation. They were chosen based on their utility and frequent use for general embedded systems applications. The goal is to be able to develop a robust application fully implemented using Ceu-Arduino and with no computational and energy waste due to polling.
+\subsubsection{Analog I/O}
+\tab The current implementation for the Analog functions for Arduino, such as analogRead(), cause the application to freeze due to polling the hardware register bits which signal the end of the conversion. The Analog To Digital Conversion hardware supports interrupts and therefore, this is a viable choice as interrupts can be used to signal the end of the conversion and avoid polling.
+\subsubsection{SPI}
+\tab Wired communication protocols such as I2C and SPI are often used in embedded systems as they enable the use of external components. The current wired data transfer implementation of such protocols in Arduino is done using interrupt service routines for data buffering but the operations still freeze to maintain synchorism in the application (it is expected that a read is through and done after a call to analogRead(), for example, since the code is structured sequentially).
+\par The candidates for this section were I2C and SPI. When it came to deciding between both, SPI was chosen over I2C because the latter's advantadge is that it uses less lines and does a better job when supporting multiple masters and multiple slaves, while the former is faster and simpler. Since in most applications these protocols are used for communication over a microcontroller and an external component, there is rarely need for multiple masters. 
+\par This decision is also supported by the fact that most external components on the market (more especifically wireless communication modules) use the SPI protocol.
+\subsubsection{Serial}
+\tab For similar reasons to the previous section (SPI), the Serial communication module currently implemented in Arduino blocks the application. Since the Serial communication is an integral part of many embedded systems applications, this is a module which will be of great utility for the community.
+\subsubsection{External RTC}
+\tab An external RTC can enable the microcontroler to go into a deeper state of sleep and therefore, save power. Developing a module which supports such a component will be one of the greatest feats for this project in terms of energy-saving, as the ammount of idle time gained from all the reimplementations can be better taken advantadge of by entering a deeper state of sleep.
+\subsubsection{EEPROM}
+\tab Support to memory operations to the microcontrollers EEPROM can also save many cicles due to the large volume of such operations. Therefore any improvements to this would prove to be greatly benefitial as the ammount of cicles saved will also reflect such volume.
+
+\section{Conclusion and steps forward}
+\tab The project is progressing inside what is expected and, therefore, no changes to the proposal are needed. Impleentation of the modules will follow a process of studying the current implementation; understanding the blocking process and motives behind it; proposing a solution; implementing the new module in C; implementing the module in Ceu-Arduino; and finally, developing a sample application.
+
+\end{document}

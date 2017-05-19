@@ -122,7 +122,8 @@ Francisco \textsc{Santanna} % Supervisor's Name
 \subsubsection{External RTC}
 \tab An external RTC can enable the microcontroler to go into a deeper state of sleep and therefore, save power. Developing a module which supports such a component will be one of the greatest feats for this project in terms of energy-saving, as the ammount of idle time gained from all the reimplementations can be better taken advantadge of by entering a deeper state of sleep.
 \subsubsection{EEPROM}
-\tab Support to memory operations to the microcontrollers EEPROM can also save many cicles due to the large volume of such operations. Therefore any improvements to this would prove to be greatly benefitial as the ammount of cicles saved will also reflect such volume.
+\tab The Arduino hardware offers support to EEPROM operations. The EEPROM can be interpreted here as a small hard-disk inside the microcontroller. As such, information is preserved across resets. Being able to store information in such a manner opens the window to many interesting applications. 
+\par Support to these memory operations to the microcontrollers EEPROM save many cicles because memory access is much slower than most operations. Fortunately, the hardware for EEPROM interface supports interrupts and therefore offers a viable implementation path. This is predicted to be the hardest module subject for implementation because there are, inherently, many challenges in dealing with memory (such as concurrent access to data and memory coherence).
 
 \section{Conclusion and steps forward}
 \tab The project is progressing inside what is expected and, therefore, no changes to the proposal are needed. Impleentation of the modules will follow a process of studying the current implementation; understanding the blocking process and motives behind it; proposing a solution; implementing the new module in C; implementing the module in Ceu-Arduino; and finally, developing a sample application.

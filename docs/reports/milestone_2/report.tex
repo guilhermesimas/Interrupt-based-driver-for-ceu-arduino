@@ -1,0 +1,130 @@
+\documentclass{article}
+%\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{amsfonts}
+\usepackage{latexsym}
+\usepackage{fullpage}
+\usepackage{graphicx}
+%\usepackage{paralist}
+\usepackage{tikz-timing}
+\usepackage{tabto}
+
+\lstset{language=C}
+
+
+% Default margins are too wide all the way around. I reset them here
+\setlength{\topmargin}{-.5in}
+\setlength{\textheight}{9in}
+\setlength{\oddsidemargin}{.125in}
+\setlength{\textwidth}{6.25in}
+
+\begin{document}
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%----------------------------------------------------------------------------------------
+%	HEADING SECTIONS
+%----------------------------------------------------------------------------------------
+
+\textsc{\LARGE Google Summer Of Code}\\[1.5cm] % Name of your university/college
+\textsc{\Large LabLua}\\[0.5cm] % Major heading such as course name
+\textsc{\large Interrupt-based drivers and libraries for Ceu-Arduino}\\[0.5cm] % Minor heading such as course title
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Milestone Report 2}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%----------------------------------------------------------------------------------------
+%	AUTHOR SECTION
+%----------------------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+\begin{flushleft} \large
+\emph{Student:}\\
+Guilherme \textsc{Simas} % Your name
+\end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+\begin{flushright} \large
+\emph{Mentor:} \\
+Francisco \textsc{Santanna} % Supervisor's Name
+\end{flushright}
+\end{minipage}\\[4cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%----------------------------------------------------------------------------------------
+%	DATE SECTION
+%----------------------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%----------------------------------------------------------------------------------------
+%	LOGO SECTION
+%----------------------------------------------------------------------------------------
+
+%\includegraphics{Logo}\\[1cm] % Include a department/university logo - this will require the graphicx package
+ 
+%----------------------------------------------------------------------------------------
+
+\vfill % Fill the rest of the page with whitespace
+
+\end{titlepage}
+
+\tableofcontents{}
+
+\newpage
+
+\section{Introduction}	
+
+
+\tab The goal of this report is to show the progress on the project from the past two weeks, comparing it with the expectation from the previous report in order to avaliate the progress made. In the first section the progress from previous report will be summarized. Following the summary, expectations for the proposed two-week period (June 23th) will be listed, followed by what was achieved.
+\par This document concludes by discussing the next steps forward.
+
+\section{Previous Progress}
+\tab On the previous, report, the modules chosen for development were presented along with a brief description of the motivation behind each one. The modules were \textbf{Analog I/O}, \textbf{SPI}, \textbf{Serial}, \textbf{External RTC} and \textbf{EEPROM}.
+
+\section{Milestone Objective}
+
+\tab The goal for the current two-week period according to the planning was to deepen in the studies of the hardware and example applications in order to have a better understanding of what makes each module freeze and have all the necessary tools to begin proposing solutions. However, the team decided it was best to pivot this approach.
+\par The new path will be to deal with each module individually. As such, the work from the next subsequent predicted periods (according to the planning) would be distriuted along the other periods, and 4 weeks would be gained to compensate for the redistributed work.
+\par The goal for this period is now to study the \textbf{hardware}, the reason for the freezing behaviour in the \textbf{current Arduino library implementation} of the Analog I/O module, the \textbf{tools} provided from the development environment and, finally, to implement a \textbf{C version} of the API.
+
+\section{Progress}
+\tab In order to develop the API, there was a need to study the implementation and how it behaves, so that, alongside the hardware information obtained from the datasheet, it would be possible to start developing a solution. The Analog I/O module provided in the Arduino API involves reading an analog value, which is done by a dedicated hardware, the \textbf{Analog To Digital Converter (ADC)} and writing an analog value, which is essentially outputting a PWM wave, since the hardware is only able to output a on or off digital voltage.
+\par Writing an analog value is already implemented in the Ceu-Arduino current state as emitting a PWM output wave, ans therefore requires no reimplementation. The API needs only to reimplement reading the analog value by interfacing with the dedicated ADC hardware.
+
+\subsection{Hardware}
+\tab The dedicate ADC hardware present in the microcontroller consists of a single dedicated hardware for the conversion which serves all analog input pins. It can read only one pin at a time since there is only one converter logic. The hardware counts with a multiplexer in order to select which pin is being read.
+\par In order to perform a conversion, the software must first configure the ADMUX register, which control the voltage reference and the pin selection, and the \textbf{Analog to Digital Status and Control Register (ADSCRA)} responsible for turning the hardware on and enabling interrupts.
+\par After the setup, setting the Analog to \textbf{Digital Start Conversion (ADSC)} bit in ADCSRA starts a conversion. When the conversion is done, the hardware will clear the register, and trigger an interruption if the \textbf{Analog to Digital Interrupt Enable (ADIE)} bit is set in ADCSRA. 
+\par After the conversion is done, the result will be available in the \textbf{ADC Data Registers Low (ADCL) and High (ADCH)}.
+
+\subsection{Current Implementation}
+\tab The current library exports a function called analogRead() which takes in, as a parameter, the pin for which to read the value. The function sets the values in ADMUX (based on the pin and a default value for the reference) and sets ADSC. It then polls ADSC, freezing the application while ADSC is set. After it it cleared by the hardware, the function returns the result of the conversion stored in ADCH and ADCL.
+
+\subsection{Tools}
+\tab AVR provides, along with a detailed datasheet on the microcontroller, a C compiler and libraries to better interface with the hardware. The most important things exported in the libraries, for the means of this API, are the register definitions and the interrupt service routines support. The library provides access to the registers memory addresses by name and also makes available functions for setting and clearing bits, also defined. Furthermore, it provides easy definition of \textbf{Interrupt Service Routines (ISR)} and attachment to the hardware's interrupt vectors. The user needs only to define a function with the name ISR and pass in as a parameter the interrupt vector number. The avr compiler will associate that routine with the corresponding interrupt.
+
+\subsection{C Version API}
+\tab In order to reimplement the API using interrupts, the analogRead() function was divided unto 3 subfunctions: \textbf{begin()}, \textbf{available()} and \textbf{read()}. The new API also counts with a global state variable that keeps traack of the hardware state regarding a conversion, as well as an ISR attached to the ADC interrupt vector.
+\par begin() sets up all the configuration registers alike the original implementation, with the only addition that it sets ADIE. It ends by setting ADSC in order to start the conversion. This function sets the value of the global state variable to reflect that a conversion is now in progress.
+\par available() returns whether or not a conversion is still in progress, by checking the global state variable.
+\par read() returns the conversion result in ADCH and ADCL, much like the original API.
+\par Finally, the ISR, which is triggered when the conversion is done, sets the global state variable to reflect that a conversion is no longer in progress and, thereore, the result is available.
+\par In order to perform a read on an analog pin using this API, the user must call begin() passing in the analog pin number as a parameter, then, after available() returns true, a call to read() returns the result wanted.
+  
+\section{Conclusion and steps forward}
+\tab The C version of the API proved to be a good learning tool and step towards the Ceu API. The goal to have a functioning version of the API, implemented in C, was achieved.
+\par The next two-weeks period will be focused on the development of the Ceu version of the API.
+\end{document}

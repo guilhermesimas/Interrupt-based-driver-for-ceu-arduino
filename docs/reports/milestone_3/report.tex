@@ -1,0 +1,121 @@
+\documentclass{article}
+%\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{amsfonts}
+\usepackage{latexsym}
+\usepackage{fullpage}
+\usepackage{graphicx}
+%\usepackage{paralist}
+\usepackage{tikz-timing}
+\usepackage{tabto}
+
+\lstset{language=C}
+
+
+% Default margins are too wide all the way around. I reset them here
+\setlength{\topmargin}{-.5in}
+\setlength{\textheight}{9in}
+\setlength{\oddsidemargin}{.125in}
+\setlength{\textwidth}{6.25in}
+
+\begin{document}
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%----------------------------------------------------------------------------------------
+%	HEADING SECTIONS
+%----------------------------------------------------------------------------------------
+
+\textsc{\LARGE Google Summer Of Code}\\[1.5cm] % Name of your university/college
+\textsc{\Large LabLua}\\[0.5cm] % Major heading such as course name
+\textsc{\large Interrupt-based drivers and libraries for Ceu-Arduino}\\[0.5cm] % Minor heading such as course title
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Milestone Report 3}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%----------------------------------------------------------------------------------------
+%	AUTHOR SECTION
+%----------------------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+\begin{flushleft} \large
+\emph{Student:}\\
+Guilherme \textsc{Simas} % Your name
+\end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+\begin{flushright} \large
+\emph{Mentor:} \\
+Francisco \textsc{Santanna} % Supervisor's Name
+\end{flushright}
+\end{minipage}\\[4cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%----------------------------------------------------------------------------------------
+%	DATE SECTION
+%----------------------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%----------------------------------------------------------------------------------------
+%	LOGO SECTION
+%----------------------------------------------------------------------------------------
+
+%\includegraphics{Logo}\\[1cm] % Include a department/university logo - this will require the graphicx package
+ 
+%----------------------------------------------------------------------------------------
+
+\vfill % Fill the rest of the page with whitespace
+
+\end{titlepage}
+
+\tableofcontents{}
+
+\newpage
+
+\section{Introduction}	
+
+
+\tab The goal of this report is to show the progress on the project from the past two weeks, comparing it with the expectation from the previous report in order to avaliate the progress made. In the first section the progress from previous report will be summarized. Following the summary, expectations for the proposed two-week period (June 23th) will be listed, followed by what was achieved.
+\par This document concludes by discussing the next steps forward.
+
+\section{Previous Progress}
+\tab On the previous report the ADC module was implemented in C as a learning tool ad step towards the Ceu API. It consisted on 3 functions which together enabled the user to perform analog reads in the application level, using interrupts in the backend. Function begin() starts the conversion, avaliable() returns whether or not a conversion is in progress and read() returns the result of the latest conversion.
+
+\section{Milestone Objective}
+
+\tab The goal for the current two-week period is to implement a minimum functioning API in Ceu for the ADC module, based on the work done the previous milestone and other drivers currently implemented in Ceu. By the end of the 2-week period it is expected to have a sample application in Ceu using the API.
+
+\section{Progress}
+\tab Drivers already previously implemented in Ceu were studied in order to better understand how the Ceu environment works in the context of libraries. This version of the Ceu API was implemented reutiziling the most possible of the C API. In other words, some of the functions implemented in C during the past period made their way to this API, as a means to not waste any work. The API has some apparent limitations, which will also be discussed below.  
+
+\subsection{Ceu Environment}
+\tab The Ceu language provides integration with C code. The developer is able to declare functions in C and call them from Ceu code. Furthermore, the environment also supports attachment of a block of code to a interrupt vector, in order words, the definition of interrupt service routines. By this logic, we can already port the C API to Ceu, but if we stop there we do not make use of Ceu's model. We want the application to be able to "await" the result, in order to save the cicles that are used for the conversion.
+\par The application level should interface with the driver by merely requesting a value and awaiting its result.
+\par The Ceu environment also provides easy integration with the values made available by the AVR libraries, as to make use of, for example, the interrupt vector numbers and the register values, the developer needs only to modify a file which declared the defined variables as "natives".
+
+\subsection{Ceu API}
+\tab The begin() function implemented the previous period was brought to the API and names anreq(), as Analog Request. The function basely calls begin() by relaying the pin passed in as a parameter. As before, this will start the conversion after setting up the hardware.
+\par Ceu's treatment of ISRs is done by "spawning" (spawn directive) a block code of type isr, passing in, as a parameter, the interrupt vector number. Much like the ISR in the C API, this block of code will be called automatically when the conversion is done. Unlike the previous version, however, the ISR will emit an input event to the application, carrying the value of the conversion (obtained from calling the read() function from the C API). As such, there ir no longer any need to have a global state variable nor the available() function (which queried the state variable).
+\par To perform an analog read, the application must call anreq() passing in the analog pin number as a parameter and subsequently, "await" the input event AN.
+
+\subsection{Limitations}
+\tab The API expects the user to enter an await AN state before the hardware is done with the conversion. If the user does not accomplish this, the driver will still emit the event, which will be lost. It was also assumed that the user does not call anreq() again before the conversion is done. Consequences of the user doing this were not studied. Also, Ceu APIs are usually modeled as output and input events (user emits an event in order to relay a command to the API and the API emits input events to relay values and results to the user).
+\par These limmitations are already being studied and treated as of the end of this period, but as the new API is still in an unstable state, the full implementation and description of the solutions will be left for next period.
+
+\section{Conclusion and steps forward}
+\tab The API provides minimum functionality, leaving room for much more. As mentioned in the previous section, these concerns led to the development of a new version of the API, which as of the date of this reports is in a unstable state.
+\par The next two-weeks period will be focused on the development of the next version of the API, which will approach the issues mentioned above.
+\end{document}

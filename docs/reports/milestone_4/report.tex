@@ -1,0 +1,116 @@
+\documentclass{article}
+%\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{amsfonts}
+\usepackage{latexsym}
+\usepackage{fullpage}
+\usepackage{graphicx}
+%\usepackage{paralist}
+\usepackage{tikz-timing}
+\usepackage{tabto}
+
+\lstset{language=C}
+
+
+% Default margins are too wide all the way around. I reset them here
+\setlength{\topmargin}{-.5in}
+\setlength{\textheight}{9in}
+\setlength{\oddsidemargin}{.125in}
+\setlength{\textwidth}{6.25in}
+
+\begin{document}
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%----------------------------------------------------------------------------------------
+%	HEADING SECTIONS
+%----------------------------------------------------------------------------------------
+
+\textsc{\LARGE Google Summer Of Code}\\[1.5cm] % Name of your university/college
+\textsc{\Large LabLua}\\[0.5cm] % Major heading such as course name
+\textsc{\large Interrupt-based drivers and libraries for Ceu-Arduino}\\[0.5cm] % Minor heading such as course title
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Milestone Report 4}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%----------------------------------------------------------------------------------------
+%	AUTHOR SECTION
+%----------------------------------------------------------------------------------------
+
+\begin{minipage}{0.4\textwidth}
+\begin{flushleft} \large
+\emph{Student:}\\
+Guilherme \textsc{Simas} % Your name
+\end{flushleft}
+\end{minipage}
+~
+\begin{minipage}{0.4\textwidth}
+\begin{flushright} \large
+\emph{Mentor:} \\
+Francisco \textsc{Santanna} % Supervisor's Name
+\end{flushright}
+\end{minipage}\\[4cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%----------------------------------------------------------------------------------------
+%	DATE SECTION
+%----------------------------------------------------------------------------------------
+
+{\large \today}\\[3cm] % Date, change the \today to a set date if you want to be precise
+
+%----------------------------------------------------------------------------------------
+%	LOGO SECTION
+%----------------------------------------------------------------------------------------
+
+%\includegraphics{Logo}\\[1cm] % Include a department/university logo - this will require the graphicx package
+ 
+%----------------------------------------------------------------------------------------
+
+\vfill % Fill the rest of the page with whitespace
+
+\end{titlepage}
+
+\tableofcontents{}
+
+\newpage
+
+\section{Introduction}	
+
+
+\tab The goal of this report is to show the progress on the project from the past two weeks, comparing it with the expectation from the previous report in order to avaliate the progress made. In the first section the progress from previous report will be summarized. Following the summary, expectations for the proposed two-week period (June 23th) will be listed, followed by what was achieved.
+\par This document concludes by discussing the next steps forward.
+
+\section{Previous Progress}
+\tab On the previous report the ADC module was implemented in Ceu as a minimum functioning API. It counts with a function call to request a analog read in a pin and a input event will be emitted by an ISR when the conversion finishes. There were pending issues with the API such as the request not being an output event (as it should be to conform with Ceu's convention) and the undefined behaviour when issuing multiple concurrent requests.
+\par As mentioned in the previous report, a new version of the API whose purpose is to solve these concerns was started but was found to be in an unstable state.
+
+\section{Milestone Objective}
+
+\tab The goal for the current two-week period is to finish the new version which deals with the concerns. As such, requests should be modeled as output events and the routines called in the back-end shoud somehow treat the concurrent requests.
+
+\section{Progress}
+\tab The new API treats the two concerns mentioned above. When developing this version of the API, it was decided that the goal was still to avoid complex implementations that would add to much of a load to the backend or would delay the next modules.
+
+\subsection{Concurrent Requests}
+\tab The Atmel datasheet specifies that when a conversion is in progress on the ADC hardware, writing values to the ADSC bit ou ADMUX bits have no effect, since the hardware holds the values.Since the hardware cannot have its registers values changed during a conversion, the begin() has virtually no effect when a conversion is not done. Therefore, the begin() function is safe.
+\par Another problem remains, which is that the conversion request is lost. To deal with this case, a bit vector is used to keep track of pendant requests. Before calling begin(), the driver sets the ith least significant bit of the vector, and clears it after emitting the result event. After completing a conversion, the ISR checks if there are conversions left to do (checking the vector's bits). If there are, the driver treats the one with the lowest value (A0 has preference over A1, which has preference over A2 and so on). This means that the highest pins can suffer starvation, but the it was decided that the overhead was not worth it.
+
+\subsection{Output Events}
+\tab The Ceu environment provides a file, namely pinsoutput.c.h, which lists declarations of output events handlers. In other words, by adding an entry to the file, following the framework, the developer can declare C code to be executed when the user emits an especific output event. This knowledge was gathered by reading through the files and studying how emitting PIN output events worked (behave as a digitalWrite).
+\par The idea is for the user to emit an output event in order to issue a requisition to the driver. As such, a new entry in pinsoutput.c.h was made for each one of the six analog pins. The code associated with the output event calls begin(), passing in the corresponding analog pin, and adds that pin to the pendent conversions bit vector. As described previously, the begin() would be safe since the registers holds the values.
+ 
+\section{Conclusion and steps forward}
+\tab The API fullfils the Ceu convention requirements and is robust enough to be used in applications. Although some improvements remain, such as solving the starvation issue and preventing the user from losing a read result, the cost of implementation is not worth it in terms of project time and computational overhead.
+\par The next two-weeks period will be used to fix any bugs or small tweaks that may be needed for the ADC driver. Furthermore, the focus will be shifting towards the \textbf{SPI} module.
+\end{document}

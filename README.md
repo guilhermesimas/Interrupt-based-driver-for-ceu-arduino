@@ -29,3 +29,4 @@ For the current drivers and libraries builds, refer to the [ceu-arduino reposito
 * [Milestone 1](./docs/reports/milestone_1/report.pdf)
 * [Milestone 2](./docs/reports/milestone_2/report.pdf)
 * [Milestone 3](./docs/reports/milestone_3/report.pdf)
+* [Milestone 4](./docs/reports/milestone_4/report.pdf)

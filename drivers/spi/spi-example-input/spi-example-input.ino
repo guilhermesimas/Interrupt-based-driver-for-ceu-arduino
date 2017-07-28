@@ -12,6 +12,7 @@ void setup(){
 
     Serial.begin(9600);
     SPI.begin();
+    Serial.println("=======================");
 
 }
 
@@ -24,7 +25,11 @@ void loop(){
     // Wait 3 seconds
     SPI.beginTransaction(SPISettings(1400000, MSBFIRST, SPI_MODE2));
     delay(3000);
-    Serial.println((uint8_t)SPI.transfer(NULL),BIN);
+    //Start transfer
+    SPI.transferStart(0x0);
+    //Wait
+    while(!SPI.available());
+    Serial.print("Data is:");Serial.println((uint8_t)SPI.transferGetData(),BIN);
     SPI.endTransaction();
     delay(10);
 }

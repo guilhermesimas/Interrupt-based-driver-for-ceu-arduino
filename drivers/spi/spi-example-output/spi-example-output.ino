@@ -42,7 +42,14 @@ void loop(){
     // Setting up transition for device to get data ready
     SPI.beginTransaction(SPISettings(1400000, MSBFIRST, SPI_MODE0));
     // Output data in binary form, invert so 1 is ON and 0 is OFF
-    SPI.transfer( ~( (uint8_t) value ) );
+    SPI.transferStart( ~( (uint8_t) value ) );
+    int nCycles = 0;
+    while(!SPI.available()){
+        //delay(1000);
+        Serial.println("Iteration");
+        nCycles++;
+    }
+    Serial.print("Cycles saved <");Serial.print(nCycles);Serial.println(">");
     delay(10);
     SPI.endTransaction();
     delay(50);

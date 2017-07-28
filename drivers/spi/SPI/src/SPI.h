@@ -15,7 +15,7 @@
 #define _SPI_H_INCLUDED
 
 #include <Arduino.h>
-#include <avr/interrupts.h>
+#include <avr/interrupt.h>
 
 // SPI_HAS_TRANSACTION means SPI has beginTransaction(), endTransaction(),
 // usingInterrupt(), and SPISetting(clock, bitOrder, dataMode)
@@ -208,10 +208,12 @@ public:
   // Write to the SPI bus (MOSI pin) and also receive (MISO pin)
   inline static void transferStart(uint8_t data) {
     attachInterrupt();
+    isAvailableFlag = 0;
     SPDR = data;
   }
 
-  inline static transferGetData(){
+  inline static uint8_t transferGetData( void ){
+    
     return SPDR;
   }
   // After performing a group of transfers and releasing the chip select
@@ -267,8 +269,16 @@ public:
   // AVR responds to SPI's interrupt
   inline static void attachInterrupt() { SPCR |= _BV(SPIE); }
   inline static void detachInterrupt() { SPCR &= ~_BV(SPIE); }
+  
+  inline static void setIsAvailable(bool flag) { 
+    //Serial.println(flag);
+    isAvailableFlag = flag; 
+  }
 
-  inline static bool available() { return !!( SPSR & _BV(SPIF) ); }
+  inline static bool available() {
+    //Serial.println(isAvailableFlag);
+    return isAvailableFlag; 
+  }
 
 private:
   static uint8_t initialized;
@@ -278,13 +288,8 @@ private:
   #ifdef SPI_TRANSACTION_MISMATCH_LED
   static uint8_t inTransactionFlag;
   #endif
+  static bool isAvailableFlag;
 };
-
-ISR( SPI_vect ) {
-  detachInterrupt();
-  // clear interrupt flag
-  SPSR &= ~_BV(SPIF);
-}
 
 extern SPIClass SPI;
 

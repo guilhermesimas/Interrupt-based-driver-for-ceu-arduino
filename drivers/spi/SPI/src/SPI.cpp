@@ -22,6 +22,7 @@ uint8_t SPIClass::interruptSave = 0;
 #ifdef SPI_TRANSACTION_MISMATCH_LED
 uint8_t SPIClass::inTransactionFlag = 0;
 #endif
+bool SPIClass::isAvailableFlag = 0;
 
 void SPIClass::begin()
 {
@@ -199,3 +200,10 @@ void SPIClass::notUsingInterrupt(uint8_t interruptNumber)
     interruptMode = 0;
   SREG = sreg;
 }
+
+ISR( SPI_STC_vect ) {
+  Serial.println("INT");
+  SPI.detachInterrupt();
+  SPI.setIsAvailable(1);
+}
+

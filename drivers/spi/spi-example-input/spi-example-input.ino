@@ -28,6 +28,7 @@ void loop(){
     //Start transfer
     SPI_transferStart(0x0);
     //Wait
+    delay(1);
     while(!SPI_available());
     Serial.print("Data is:");Serial.println((uint8_t)SPI_transferGetData(),BIN);
     delay(10);

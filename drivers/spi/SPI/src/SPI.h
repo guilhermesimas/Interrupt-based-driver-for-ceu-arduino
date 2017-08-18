@@ -41,6 +41,8 @@ void SPI_begin();
 
 void SPI_config(uint32_t clock, uint8_t bitOrder, uint8_t dataMode);
 
+void SPI_end(void);
+
 // Write to the SPI bus (MOSI pin) and also receive (MISO pin)
 void SPI_transferStart(uint8_t data);
 

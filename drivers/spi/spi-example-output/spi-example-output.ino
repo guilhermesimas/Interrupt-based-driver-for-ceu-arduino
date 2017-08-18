@@ -23,7 +23,7 @@ void setup(){
 
 
     Serial.begin(9600);
-    SPI.begin();
+    SPI_begin();
     // mark new program execution
     Serial.println("============================================");
 
@@ -40,19 +40,18 @@ void loop(){
     sprintf(value_display,BYTE_TO_BINARY_PATTERN,BYTE_TO_BINARY(value));
     Serial.print("Data is <");Serial.print(value_display);Serial.println(">");
     // Setting up transition for device to get data ready
-    SPI.beginTransaction(SPISettings(1400000, MSBFIRST, SPI_MODE0));
+    SPI_config(1400000, MSBFIRST, SPI_MODE0);
     // Output data in binary form, invert so 1 is ON and 0 is OFF
-    SPI.transferStart( ~( (uint8_t) value ) );
+    SPI_transferStart( ~( (uint8_t) value ) );
     int nCycles = 0;
-    while(!SPI.available()){
+    while(!SPI_available()){
         //delay(1000);
         Serial.println("Iteration");
         nCycles++;
     }
     Serial.print("Cycles saved <");Serial.print(nCycles);Serial.println(">");
     delay(10);
-    SPI.endTransaction();
-    delay(50);
+    SPI_end();
     // Transition from LOW to HIGH so data is latched
     digitalWrite(PIN_DEVICE,HIGH);
     delay(50);

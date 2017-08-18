@@ -2,9 +2,26 @@
 #include "SPI.h"
 
 bool isAvailableFlag = 0;
+uint8_t interruptSave = 0;
 
 void SPI_begin()
 {
+  // Set SS to high so a connected chip will be "deselected" by default
+  uint8_t port = digitalPinToPort(SS);
+  uint8_t bit = digitalPinToBitMask(SS);
+  volatile uint8_t *reg = portModeRegister(port);
+  
+  // if the SS pin is not already configured as an output
+  // then set it high (to enable the internal pull-up resistor)
+  if(!(*reg & bit)){
+      digitalWrite(SS, HIGH);
+  }
+  
+  // When the SS pin is set as OUTPUT, it can be used as
+  // a general purpose output port (it doesn't influence
+  // SPI operations).
+  pinMode(SS, OUTPUT);
+  
   SPCR |= _BV(MSTR);
   SPCR |= _BV(SPE);
 
@@ -13,6 +30,8 @@ void SPI_begin()
 }
 
 void SPI_config(uint32_t clock, uint8_t bitOrder, uint8_t dataMode){
+
+    interruptSave = SREG;
   // Clock settings are defined as follows. Note that this shows SPI2X
   // inverted, so the bits form increasing numbers. Also note that
   // fosc/64 appears twice
@@ -71,6 +90,10 @@ void SPI_config(uint32_t clock, uint8_t bitOrder, uint8_t dataMode){
   SPCR = _BV(SPE) | _BV(MSTR) | ((bitOrder == LSBFIRST) ? _BV(DORD) : 0) |
     (dataMode & SPI_MODE_MASK) | ((clockDiv >> 1) & SPI_CLOCK_MASK);
   SPSR = clockDiv & SPI_2XCLOCK_MASK;
+}
+
+void SPI_end(void) {
+    SREG = interruptSave;
 }
 
 // Write to the SPI bus (MOSI pin) and also receive (MISO pin)

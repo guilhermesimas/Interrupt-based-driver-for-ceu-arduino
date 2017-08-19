@@ -44,15 +44,14 @@ void loop(){
     //Start transfer
     SPI_transferStart(0x0);
     //Wait
-    delayMicroseconds(1);
-    while(!SPI_available());
+    while(!SPI_available()) {
+        //Serial.println();    
+    }
     uint8_t value = (uint8_t)SPI_transferGetData();
-    //SPI_end();
 
     // Display data
     char value_display [9] = {0};
     sprintf(value_display,BYTE_TO_BINARY_PATTERN,BYTE_TO_BINARY(value));
-    //Serial.print("Data is <");Serial.print(value_display);Serial.println(">");
     // Setting up transition for device to get data ready
     SPI_config(1400000, MSBFIRST, SPI_MODE0);
     // Output data in binary form, invert so 1 is ON and 0 is OFF
@@ -60,9 +59,7 @@ void loop(){
     int nCycles = 0;
     delayMicroseconds(1);
     while(!SPI_available()){
-        //delay(1000);
-        Serial.println("Iteration");
-        nCycles++;
+        //Serial.println();    
     }
     //Serial.print("Cycles saved <");Serial.print(nCycles);Serial.println(">");
     //SPI_end();

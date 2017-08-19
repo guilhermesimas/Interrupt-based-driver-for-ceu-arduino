@@ -45,7 +45,7 @@ void loop(){
     SPI_transferStart(0x0);
     //Wait
     while(!SPI_available()) {
-        //Serial.println();    
+        Serial.println();    
     }
     uint8_t value = (uint8_t)SPI_transferGetData();
 
@@ -59,7 +59,7 @@ void loop(){
     int nCycles = 0;
     delayMicroseconds(1);
     while(!SPI_available()){
-        //Serial.println();    
+        Serial.println();    
     }
     //Serial.print("Cycles saved <");Serial.print(nCycles);Serial.println(">");
     //SPI_end();

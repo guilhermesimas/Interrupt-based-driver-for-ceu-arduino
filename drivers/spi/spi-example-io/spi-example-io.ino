@@ -35,32 +35,46 @@ void setup(){
 
 void loop(){
     // Setting up transition for device to get data ready
+    delay(1000);
     digitalWrite(PIN_DEVICE_INPUT,LOW);
     digitalWrite(PIN_DEVICE_OUTPUT,LOW);
     delay(50);
     digitalWrite(PIN_DEVICE_INPUT,HIGH);
     // Wait 3 seconds
-    SPI_config(1400000, MSBFIRST, SPI_MODE0);
+    SPI_transactionBegin(1400000, MSBFIRST, SPI_MODE0);
     //Start transfer
     SPI_transferStart(0x0);
+    // transfer(0x0);
     //Wait
     while(!SPI_available()) {
-        Serial.println();    
+    // asm volatile("nop");
+    // while(!(SPSR & _BV(SPIF))) {
+        Serial.println();
+        Serial.flush();
+        // delayMicroseconds(100);
+        // int bla = 0;
+        // bla++;    
     }
     uint8_t value = (uint8_t)SPI_transferGetData();
-
+    SPI_transactionEnd();
     // Display data
     char value_display [9] = {0};
     sprintf(value_display,BYTE_TO_BINARY_PATTERN,BYTE_TO_BINARY(value));
     // Setting up transition for device to get data ready
-    SPI_config(1400000, MSBFIRST, SPI_MODE0);
+    SPI_transactionBegin(1400000, MSBFIRST, SPI_MODE0);
     // Output data in binary form, invert so 1 is ON and 0 is OFF
     SPI_transferStart( ~( (uint8_t) value ) );
-    int nCycles = 0;
-    delayMicroseconds(1);
+    // transfer( ~( (uint8_t) value ) );
+    // asm volatile("nop");
     while(!SPI_available()){
-        Serial.println();    
+    // while(!(SPSR & _BV(SPIF))){
+        Serial.println();
+        Serial.flush();
+        // delayMicroseconds(100);
+        // int bla = 0;
+        // bla++;    
     }
+    SPI_transactionEnd();
     //Serial.print("Cycles saved <");Serial.print(nCycles);Serial.println(">");
     //SPI_end();
     // Transition from LOW to HIGH so data is latched

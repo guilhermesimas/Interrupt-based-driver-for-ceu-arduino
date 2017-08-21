@@ -23,14 +23,15 @@ void loop(){
     digitalWrite(PIN_DEVICE,HIGH);
     delay(50);
     // Wait 3 seconds
-    SPI_config(1400000, MSBFIRST, SPI_MODE2);
-    delay(3000);
+    SPI_transactionBegin(1400000, MSBFIRST, SPI_MODE2);
+    //delay(3000);
     //Start transfer
     SPI_transferStart(0x0);
     //Wait
-    delay(1);
+    //delay(1);
     while(!SPI_available());
     Serial.print("Data is:");Serial.println((uint8_t)SPI_transferGetData(),BIN);
-    delay(10);
+    SPI_transactionEnd();
+    //delay(10);
 }
 

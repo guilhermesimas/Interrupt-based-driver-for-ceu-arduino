@@ -3,35 +3,46 @@
 
 bool isAvailableFlag = 0;
 uint8_t interruptSave = 0;
+uint8_t usersCount = 0;
+bool busy = false;
 
 void SPI_begin()
 {
-  // Set SS to high so a connected chip will be "deselected" by default
-  uint8_t port = digitalPinToPort(SS);
-  uint8_t bit = digitalPinToBitMask(SS);
-  volatile uint8_t *reg = portModeRegister(port);
-  
-  // if the SS pin is not already configured as an output
-  // then set it high (to enable the internal pull-up resistor)
-  if(!(*reg & bit)){
-      digitalWrite(SS, HIGH);
-  }
-  
-  // When the SS pin is set as OUTPUT, it can be used as
-  // a general purpose output port (it doesn't influence
-  // SPI operations).
-  pinMode(SS, OUTPUT);
-  
-  SPCR |= _BV(MSTR);
-  SPCR |= _BV(SPE);
+  // If first begin, initialize the application
+  if(!usersCount){
+    // Set SS to high so a connected chip will be "deselected" by default
+    uint8_t port = digitalPinToPort(SS);
+    uint8_t bit = digitalPinToBitMask(SS);
+    volatile uint8_t *reg = portModeRegister(port);
+    
+    // if the SS pin is not already configured as an output
+    // then set it high (to enable the internal pull-up resistor)
+    if(!(*reg & bit)){
+        digitalWrite(SS, HIGH);
+    }
+    
+    // When the SS pin is set as OUTPUT, it can be used as
+    // a general purpose output port (it doesn't influence
+    // SPI operations).
+    pinMode(SS, OUTPUT);
+    
+    SPCR |= _BV(MSTR);
+    SPCR |= _BV(SPE);
 
-  pinMode(SCK, OUTPUT);
-  pinMode(MOSI, OUTPUT);
+    pinMode(SCK, OUTPUT);
+    pinMode(MOSI, OUTPUT);
+  }
+  usersCount++;
 }
 
-void SPI_config(uint32_t clock, uint8_t bitOrder, uint8_t dataMode){
+void SPI_transactionBegin(uint32_t clock, uint8_t bitOrder, uint8_t dataMode){
+  // In Arduino, operations to an 8-bit variable are atomic
+  // Block untill available
+  while(busy == true);
 
-    interruptSave = SREG;
+  busy = true;
+
+  interruptSave = SREG;
   // Clock settings are defined as follows. Note that this shows SPI2X
   // inverted, so the bits form increasing numbers. Also note that
   // fosc/64 appears twice
@@ -92,8 +103,18 @@ void SPI_config(uint32_t clock, uint8_t bitOrder, uint8_t dataMode){
   SPSR = clockDiv & SPI_2XCLOCK_MASK;
 }
 
+void SPI_transactionEnd(){
+  busy = false;
+
+  // TODO: See what else is necessary here
+}
+
 void SPI_end(void) {
     SREG = interruptSave;
+    usersCount--;
+    if(usersCount == 0){
+      // disable SPI Module
+    }
 }
 
 // Write to the SPI bus (MOSI pin) and also receive (MISO pin)

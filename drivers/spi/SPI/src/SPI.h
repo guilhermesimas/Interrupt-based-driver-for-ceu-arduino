@@ -1,16 +1,3 @@
-/*
- * Copyright (c) 2010 by Cristian Maglie <c.maglie@arduino.cc>
- * Copyright (c) 2014 by Paul Stoffregen <paul@pjrc.com> (Transaction API)
- * Copyright (c) 2014 by Matthijs Kooijman <matthijs@stdin.nl> (SPISettings AVR)
- * Copyright (c) 2014 by Andrew J. Kroll <xxxajk@gmail.com> (atomicity fixes)
- * SPI Master library for arduino.
- *
- * This file is free software; you can redistribute it and/or modify
- * it under the terms of either the GNU General Public License version 2
- * or the GNU Lesser General Public License version 2.1, both as
- * published by the Free Software Foundation.
- */
-
 #ifndef _SPI_H_INCLUDED
 #define _SPI_H_INCLUDED
 
@@ -37,19 +24,40 @@
 #define SPI_CLOCK_MASK 0x03  // SPR1 = bit 1, SPR0 = bit 0 on SPCR
 #define SPI_2XCLOCK_MASK 0x01  // SPI2X = bit 0 on SPSR
 
+/*
+ * Enables the SPI Module
+ */
 void SPI_begin();
 
-void SPI_config(uint32_t clock, uint8_t bitOrder, uint8_t dataMode);
-
+/*
+ * Disables the SPI Module
+ */
 void SPI_end(void);
 
-// Write to the SPI bus (MOSI pin) and also receive (MISO pin)
+/*
+ * Configures the SPI module and holds control of the driver
+ */
+void SPI_transactionBegin(uint32_t clock, uint8_t bitOrder, uint8_t dataMode);
+
+/*
+ * Yields control of the driver
+ */
+void SPI_transactionEnd();
+
+/*
+ * Starts an 8-bit transfer asynchronously
+ */
 void SPI_transferStart(uint8_t data);
 
+/*
+ * Returns the latest received data
+ */
 uint8_t SPI_transferGetData( void );
 
-void SPI_setIsAvailable(bool flag); 
-
+/*
+ * Returns whether Data is available or not
+ */
 bool SPI_available();
 
 #endif
+

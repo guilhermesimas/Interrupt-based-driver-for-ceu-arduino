@@ -6,6 +6,8 @@ uint8_t interruptSave = 0;
 uint8_t usersCount = 0;
 bool busy = false;
 
+void SPI_setIsAvailable(bool flag);
+
 void SPI_begin()
 {
   // If first begin, initialize the application
@@ -105,42 +107,45 @@ void SPI_transactionBegin(uint32_t clock, uint8_t bitOrder, uint8_t dataMode){
 
 void SPI_transactionEnd(){
   busy = false;
-
-  // TODO: See what else is necessary here
+  SREG = interruptSave;
 }
 
 void SPI_end(void) {
-    SREG = interruptSave;
     usersCount--;
     if(usersCount == 0){
       // disable SPI Module
+      SPCR &= ~_BV(SPE);
     }
 }
 
 // Write to the SPI bus (MOSI pin) and also receive (MISO pin)
 void SPI_transferStart(uint8_t data) {
-  SPCR |= _BV(SPIE);
+  Serial.println(">>>> tranferStart"); Serial.flush();
   isAvailableFlag = 0;
+  SPCR |= _BV(SPIE);
   SPDR = data;
+  // If this line is uncommented, application works
+  // Serial.println("<<<< tranferStart"); Serial.flush();
 }
 
 uint8_t SPI_transferGetData( void ){
-  
+  SPI_setIsAvailable(false);
+  SPCR &= ~_BV(SPIF);
   return SPDR;
 }
 
 void SPI_setIsAvailable(bool flag) { 
-  //Serial.println(flag);
   isAvailableFlag = flag; 
 }
 
 bool SPI_available() {
-  //Serial.println(isAvailableFlag);
   return isAvailableFlag; 
 }
 
 
 ISR( SPI_STC_vect ) {
+  // Serial.println(">>>> INT"); Serial.flush();
   SPCR &= ~_BV(SPIE);
-  SPI_setIsAvailable(1);
+  SPI_setIsAvailable(true);
+  // Serial.println("<<<< INT"); Serial.flush();
 }

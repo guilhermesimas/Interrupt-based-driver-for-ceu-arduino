@@ -1,7 +1,7 @@
 
 #include "SPI.h"
 
-bool isAvailableFlag = 0;
+volatile bool isAvailableFlag = 0;
 uint8_t interruptSave = 0;
 uint8_t usersCount = 0;
 bool busy = false;
@@ -37,7 +37,7 @@ void SPI_begin()
   usersCount++;
 }
 
-void SPI_transactionBegin(uint32_t clock, uint8_t bitOrder, uint8_t dataMode){
+void SPI_beginTransaction(uint32_t clock, uint8_t bitOrder, uint8_t dataMode){
   // In Arduino, operations to an 8-bit variable are atomic
   // Block untill available
   while(busy == true);
@@ -105,7 +105,7 @@ void SPI_transactionBegin(uint32_t clock, uint8_t bitOrder, uint8_t dataMode){
   SPSR = clockDiv & SPI_2XCLOCK_MASK;
 }
 
-void SPI_transactionEnd(){
+void SPI_endTransaction(){
   busy = false;
   SREG = interruptSave;
 }
@@ -120,7 +120,7 @@ void SPI_end(void) {
 
 // Write to the SPI bus (MOSI pin) and also receive (MISO pin)
 void SPI_transferStart(uint8_t data) {
-  Serial.println(">>>> tranferStart"); Serial.flush();
+  // Serial.println(">>>> tranferStart"); Serial.flush();
   isAvailableFlag = 0;
   SPCR |= _BV(SPIE);
   SPDR = data;

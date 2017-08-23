@@ -37,12 +37,12 @@ void SPI_end(void);
 /*
  * Configures the SPI module and holds control of the driver
  */
-void SPI_transactionBegin(uint32_t clock, uint8_t bitOrder, uint8_t dataMode);
+void SPI_beginTransaction(uint32_t clock, uint8_t bitOrder, uint8_t dataMode);
 
 /*
  * Yields control of the driver
  */
-void SPI_transactionEnd();
+void SPI_endTransaction();
 
 /*
  * Starts an 8-bit transfer asynchronously

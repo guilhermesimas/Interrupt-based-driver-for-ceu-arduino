@@ -3,16 +3,23 @@
  */
 
 #include <SPI.h>
-#include <RF24_config.h>
 #include <nRF24L01.h>
 #include <RF24.h>
 #include "printf.h"
 
-#define RADIO_ID 1
+#define RADIO_ID 0x66
 
 #define SENSOR_PIN A0
+#define LED_PIN 3
+
+#define FULL_POWER 1023
+#define HALF_POWER 300
 
 #define SENSOR_THRESHOLD 500
+
+#define TIME_THRESHOLD 2000
+
+#define SEND_INTERVAL 100
 //
 // Hardware configuration
 //
@@ -26,7 +33,7 @@ RF24 radio(9,10);
 //
 
 // Radio pipe addresses for the nodes to communicate.
-const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
+const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xE8E8F0F0E1LL };
 
 //
 // Role management
@@ -42,6 +49,8 @@ typedef enum { role_speak = 1, role_listen, role_none } role_e;
 role_e role = role_none;
 role_e newRole = role_none;
 
+unsigned long timeLastMessage = 0;
+
 void setup(void)
 {
   //
@@ -52,16 +61,17 @@ void setup(void)
   printf_begin();
   printf("\n\rSmart Lighing application\n\r");
 
+  pinMode(SENSOR_PIN,INPUT);
+  pinMode(LED_PIN,OUTPUT);
+
   //
   // Setup and configure rf radio
   //
 
-  radio.begin();
-
   // optionally, increase the delay between retries & # of retries
-  radio.setRetries(15,15);
-  radio.setPayloadSize(sizeof(uint8_t));
+//  radio.setPayloadSize(sizeof(uint8_t));
 
+  radio.begin();
 }
 
 void loop(void)
@@ -77,13 +87,15 @@ void loop(void)
   printf("Changed to role %d",newRole);
   role = newRole;
   if(role == role_listen){
-   radio.openWritingPipe(pipes[0]);
+   //radio.openWritingPipe(pipes[0]);
+   timeLastMessage = millis();
    radio.openReadingPipe(1,pipes[1]);
    radio.startListening();
    radio.printDetails();
   } else {
+   analogWrite(LED_PIN,FULL_POWER);
    radio.openWritingPipe(pipes[1]);
-   radio.openReadingPipe(1,pipes[0]);
+   //radio.openReadingPipe(1,pipes[0]);
    radio.stopListening();
    radio.printDetails();
   }
@@ -94,16 +106,18 @@ void loop(void)
 
   if (role == role_speak)
   {
+    radio.startListening();
+    radio.stopListening();
     printf("Radio %u is on!",RADIO_ID);
     uint8_t radio_id = RADIO_ID;
     bool ok = radio.write( &radio_id, sizeof(uint8_t) );
     
     if (ok)
-      printf("ok...");
+      printf("ok...\n\r");
     else
       printf("failed.\n\r");
 
-    delay(1000);
+    delay(SEND_INTERVAL);
   }
 
   //
@@ -130,6 +144,11 @@ void loop(void)
 	// make the transition to receiver
 	delay(20);
       }
+      analogWrite(LED_PIN,HALF_POWER);
+      timeLastMessage = millis();
+    }
+    if(millis() - timeLastMessage > SEND_INTERVAL * 2){
+      analogWrite(LED_PIN,LOW);
     }
   }
 }
